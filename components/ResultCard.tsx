@@ -5,14 +5,18 @@ import { useAnimatedCounter } from "@/hooks/use-animated-counter";
 import { truncateHash } from "@/lib/format-utils";
 import { getMockCalls } from "@/constants/mock-data";
 import { APP_CONFIG } from "@/constants/app-config";
+import { ChainConfig } from "@/config/chains";
 
 interface ResultCardProps {
   result: BenchmarkResult | null;
   isRunning: boolean;
   isPreparing?: boolean;
+  isWaitingForWallet?: boolean;
+  isConnectedWallet?: boolean;
   syncMode: boolean;
   partialResult?: PartialResult | null;
   elapsedTime?: number;
+  chainConfig: ChainConfig;
 }
 
 /**
@@ -21,11 +25,13 @@ interface ResultCardProps {
 function RPCCallRow({ 
   call, 
   showMockData, 
-  isLiveRunning 
+  isLiveRunning,
+  accentColor,
 }: { 
   call: RPCCallLog; 
   showMockData: boolean; 
   isLiveRunning: boolean;
+  accentColor: string;
 }) {
   const animatedDuration = useAnimatedCounter(call.duration, APP_CONFIG.COUNTER_ANIMATION_DURATION);
   const isSyncMethod = call.method === "eth_sendRawTransactionSync";
@@ -44,21 +50,30 @@ function RPCCallRow({
                 ? 'bg-emerald-500/10 border-emerald-500/30'
                 : 'bg-zinc-800/50 border-transparent'
       }`}
+      style={isLiveRunning && !isPending && !showMockData ? {
+        backgroundColor: `${accentColor}15`,
+        borderColor: `${accentColor}30`,
+      } : undefined}
     >
       <span className={`font-mono transition-colors duration-300 ${showMockData ? 'text-zinc-400' : isPending ? 'text-yellow-300' : isLiveRunning ? 'text-zinc-300' : 'text-zinc-300'}`}>
         {call.method}
       </span>
-      <span className={`font-mono transition-colors duration-300 text-right min-w-[50px] inline-block ${
-        showMockData 
-          ? 'text-zinc-500' 
-          : isPending
-            ? 'text-yellow-400 animate-pulse'
-            : isSyncMethod
-              ? 'text-emerald-300 font-semibold'
-              : isLiveRunning
-                ? 'text-emerald-400'
-                : 'text-emerald-400'
-      }`}>
+      <span 
+        className={`font-mono transition-colors duration-300 text-right min-w-[50px] inline-block ${
+          showMockData 
+            ? 'text-zinc-500' 
+            : isPending
+              ? 'text-yellow-400 animate-pulse'
+              : isSyncMethod
+                ? 'text-emerald-300 font-semibold'
+                : isLiveRunning
+                  ? 'text-emerald-400'
+                  : 'text-emerald-400'
+        }`}
+        style={isLiveRunning && !isPending && !showMockData && !isSyncMethod ? {
+          color: accentColor,
+        } : undefined}
+      >
         {showMockData ? '--' : isPending ? '...' : `${animatedDuration}ms`}
       </span>
     </div>
@@ -68,15 +83,20 @@ function RPCCallRow({
 export function ResultCard({ 
   result, 
   isRunning, 
-  isPreparing = false, 
+  isPreparing = false,
+  isWaitingForWallet = false,
+  isConnectedWallet = false,
   syncMode,
   partialResult, 
-  elapsedTime = 0 
+  elapsedTime = 0,
+  chainConfig,
 }: ResultCardProps) {
   const title = "Transaction Result";
   const subtitle = syncMode 
     ? "Using eth_sendRawTransactionSync" 
-    : "Using sendTransaction + waitForTransactionReceipt";
+    : isConnectedWallet
+      ? "Measuring time from wallet send to confirmation"
+      : "Using sendTransaction + waitForTransactionReceipt";
 
   // Determine what to display
   const isLiveRunning = isRunning && partialResult;
@@ -115,8 +135,17 @@ export function ResultCard({
           </span>
         )}
         {isLiveRunning && (
-          <span className="px-2 py-1 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400 flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+          <span 
+            className="px-2 py-1 rounded text-xs font-semibold flex items-center gap-1"
+            style={{
+              backgroundColor: `${chainConfig.accentColor}20`,
+              color: chainConfig.accentColor,
+            }}
+          >
+            <div 
+              className="w-2 h-2 rounded-full animate-pulse" 
+              style={{ backgroundColor: chainConfig.accentColor }}
+            />
             Live
           </span>
         )}
@@ -143,14 +172,42 @@ export function ResultCard({
         </>
       )}
 
+      {/* Show waiting for wallet confirmation state */}
+      {isWaitingForWallet && (
+        <>
+          <div className="mb-3">
+            <p className="text-sm text-zinc-400 mb-1">Total Duration</p>
+            <p className="text-2xl font-bold font-mono text-yellow-400">
+              <span className="animate-pulse">--</span>
+            </p>
+          </div>
+
+          <div className="flex-1 flex flex-col mb-3">
+            <p className="text-sm text-zinc-400 mb-2">RPC Call Breakdown</p>
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <div className="w-10 h-10 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-yellow-400 font-medium">
+                Waiting for wallet confirmation...
+              </p>
+              <p className="text-xs text-zinc-500">
+                Timer starts after you confirm the transaction
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Show mock data, real results, or live running data */}
-      {!isPreparing && (result || showMockData || isLiveRunning) && (
+      {!isPreparing && !isWaitingForWallet && (result || showMockData || isLiveRunning) && (
         <>
           {(showMockData || result?.status === "success" || isLiveRunning) ? (
             <>
               <div className="mb-3">
                 <p className="text-sm text-zinc-400 mb-1">Total Duration</p>
-                <p className={`text-2xl font-bold font-mono ${showMockData ? 'text-zinc-400' : isLiveRunning ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                <p 
+                  className={`text-2xl font-bold font-mono ${showMockData ? 'text-zinc-400' : isLiveRunning ? 'text-yellow-400' : 'text-emerald-400'}`}
+                  style={isLiveRunning ? { color: chainConfig.accentColor } : undefined}
+                >
                   {showMockData ? '--' : animatedDuration}ms
                 </p>
               </div>
@@ -164,13 +221,14 @@ export function ResultCard({
                       call={call} 
                       showMockData={showMockData}
                       isLiveRunning={!!isLiveRunning}
+                      accentColor={chainConfig.accentColor}
                     />
                   ))}
                 </div>
               </div>
 
               {/* RPC Call Count Summary */}
-              <div className="py-2 border-t border-zinc-700/50 mb-2">
+              <div className="py-2 border-t border-zinc-700/50">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-zinc-400">Total RPC Calls</span>
                   <span className={`font-mono ${showMockData ? 'text-zinc-500' : 'text-zinc-300'}`}>
@@ -184,10 +242,11 @@ export function ResultCard({
                 <div className="pt-3 border-t border-zinc-700 flex items-center gap-2">
                   <span className="text-xs text-zinc-400">Transaction Hash</span>
                   <a
-                    href={`${APP_CONFIG.BLOCK_EXPLORER_URL}/tx/${result.txHash}`}
+                    href={`${chainConfig.blockExplorerUrl}/tx/${result.txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-xs text-white hover:text-emerald-300 font-mono transition-colors group"
+                    style={{ '--hover-color': chainConfig.accentColor } as React.CSSProperties}
                   >
                     <span>{truncateHash(result.txHash)}</span>
                     <svg

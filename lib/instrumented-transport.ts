@@ -6,6 +6,8 @@ export interface RPCCallLog {
   endTime: number;
   duration: number;
   isPending?: boolean;
+  /** Whether this call happened during preparation (before timer started) */
+  isPreparation?: boolean;
 }
 
 export function createInstrumentedTransport(
