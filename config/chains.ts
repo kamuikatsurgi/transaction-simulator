@@ -1,11 +1,12 @@
 import { Chain } from "viem";
-import { polygonAmoy } from "viem/chains";
+import { polygonAmoy, polygon } from "viem/chains";
 import * as allViemChains from "viem/chains";
 
 /**
  * Featured chains shown in the chain selector
  */
 export const FEATURED_CHAINS: Chain[] = [
+  polygon,
   polygonAmoy,
 ];
 
@@ -19,6 +20,7 @@ export interface ChainUI {
 }
 
 const CHAIN_UI_MAP: Record<number, ChainUI> = {
+  [polygon.id]: { logo: "/polygon.svg", accentColor: "#6C00F6", shortName: "Polygon" },
   [polygonAmoy.id]: { logo: "/polygon.svg", accentColor: "#6C00F6", shortName: "Polygon Amoy" },
 };
 
@@ -70,7 +72,7 @@ export function isZkSyncChain(chainId: number): boolean {
 /**
  * Default chain
  */
-export const DEFAULT_CHAIN = polygonAmoy;
+export const DEFAULT_CHAIN = polygon;
 
 /**
  * Get all viem chains as an array
