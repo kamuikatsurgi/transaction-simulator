@@ -15,7 +15,6 @@ const allViemChains = getAllViemChains();
 const featuredChainIds = new Set(FEATURED_CHAINS.map((c) => c.id));
 
 // Filter out any viem chains that conflict with our featured chains
-// (e.g., the original megaethTestnet if we have a custom override)
 const nonFeaturedChains = allViemChains.filter((c) => !featuredChainIds.has(c.id));
 
 // Combine: featured chains first (with custom overrides), then all other viem chains
@@ -51,7 +50,7 @@ export function Providers({ children }: ProvidersProps) {
         <RainbowKitProvider
           initialChain={DEFAULT_CHAIN}
           theme={darkTheme({
-            accentColor: "#10b981",
+            accentColor: "#6C00F6",
             accentColorForeground: "white",
             borderRadius: "medium",
             fontStack: "system",

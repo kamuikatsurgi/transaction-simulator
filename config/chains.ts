@@ -1,37 +1,12 @@
-import { Chain, defineChain } from "viem";
-import {
-  abstractTestnet,
-  megaethTestnet as baseMegaethTestnet,
-  monadTestnet,
-  baseSepolia,
-  sepolia,
-} from "viem/chains";
+import { Chain } from "viem";
+import { polygonAmoy } from "viem/chains";
 import * as allViemChains from "viem/chains";
-
-/**
- * MegaETH Testnet with updated RPC URL and chain ID
- * The viem default is outdated - this uses the current testnet configuration
- * See: https://docs.megaeth.com for latest network details
- */
-const megaethTestnet = defineChain({
-  ...baseMegaethTestnet,
-  id: 6343,
-  rpcUrls: {
-    default: {
-      http: ["https://timothy.megaeth.com/rpc"],
-    },
-  },
-});
 
 /**
  * Featured chains shown in the chain selector
  */
 export const FEATURED_CHAINS: Chain[] = [
-  abstractTestnet,
-  monadTestnet,
-  megaethTestnet,
-  baseSepolia,
-  sepolia,
+  polygonAmoy,
 ];
 
 /**
@@ -44,11 +19,7 @@ export interface ChainUI {
 }
 
 const CHAIN_UI_MAP: Record<number, ChainUI> = {
-  [abstractTestnet.id]: { logo: "/abs.png", accentColor: "#10b981", shortName: "Abstract Sepolia" },
-  [monadTestnet.id]: { logo: "/monad.png", accentColor: "#a855f7", shortName: "Monad Testnet" },
-  [megaethTestnet.id]: { logo: "/megaeth.png", accentColor: "#f59e0b", shortName: "MegaETH Testnet" },
-  [baseSepolia.id]: { logo: "/base.svg", accentColor: "#0052FF", shortName: "Base Sepolia" },
-  [sepolia.id]: { logo: "/eth.svg", accentColor: "#627EEA", shortName: "Sepolia" },
+  [polygonAmoy.id]: { logo: "/polygon.svg", accentColor: "#6C00F6", shortName: "Polygon Amoy" },
 };
 
 const DEFAULT_UI: ChainUI = {
@@ -99,7 +70,7 @@ export function isZkSyncChain(chainId: number): boolean {
 /**
  * Default chain
  */
-export const DEFAULT_CHAIN = abstractTestnet;
+export const DEFAULT_CHAIN = polygonAmoy;
 
 /**
  * Get all viem chains as an array
@@ -119,7 +90,7 @@ export function getAllViemChains(): Chain[] {
  * Find a chain by ID from viem's definitions or our featured chains
  */
 export function getChainById(chainId: number): Chain | undefined {
-  // Check featured chains first (includes custom overrides like megaethTestnet)
+  // Check featured chains first
   const featured = FEATURED_CHAINS.find((c) => c.id === chainId);
   if (featured) return featured;
 
@@ -127,5 +98,5 @@ export function getChainById(chainId: number): Chain | undefined {
   return getAllViemChains().find((c) => c.id === chainId);
 }
 
-// Re-export the custom megaethTestnet for direct use
-export { megaethTestnet };
+// Re-export polygonAmoy for direct use
+export { polygonAmoy };
